@@ -1,0 +1,16 @@
+# Board scope for the build gate: the MediaTek Genio family.
+#
+# Each non-comment line is a glob matched against configs/<pattern>_defconfig;
+# the buildman board name is the defconfig name minus the _defconfig suffix.
+# New matching defconfigs are picked up automatically. Blank lines and
+# #-comments are ignored.
+#
+# To build all MediaTek boards instead (incl. the MT76xx routers), replace the
+# lines below with a single selector:
+#   @select: mediatek
+
+# Genio 350 (MT8365) -- the board name has no "genio", so list it explicitly.
+mt8365_evk
+
+# Genio 510 / 520 / 700 / 720 / 1200 and their UFS variants.
+*genio*

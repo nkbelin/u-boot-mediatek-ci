@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: GPL-2.0+
+#
+# MediaTek U-Boot build gate: builds every commit of a pushed series with
+# buildman, so a series can't break compilation or git bisect.
+#
+# To deploy: add this file to the branch as .gitlab-ci-mediatek.yml and set it
+# as the project's CI/CD configuration file (Settings -> CI/CD -> General
+# pipelines). Keep it a separate file -- don't modify an existing .gitlab-ci.yml
+# -- so it survives rebases cleanly.
+
+variables:
+  # This scripts repo; the job clones it to get build_commits.py.
+  MTK_CI_REPO: "https://github.com/nkbelin/u-boot-mediatek-ci.git"
+  MTK_CI_REF:  "main"
+  # Enough history to contain a pushed series (depth caps clone history, not the
+  # number of commits built).
+  GIT_DEPTH:   "300"
+  # Commits to build when the pushed range is unknown (new branch / force-push).
+  MTK_FALLBACK_COUNT: "50"
+  # Set to "1" to treat build warnings as errors.
+  WERROR:      "0"
+
+stages: [ build ]
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'      # allow manual runs
+
+mediatek build:
+  stage: build
+  # Pinned U-Boot CI runner image (cross-toolchains + buildman). Bump deliberately.
+  image: trini/u-boot-gitlab-ci-runner:noble-20251013-23Jan2026
+  # A runner tag available to your project; remove this line to use an untagged runner.
+  tags: [ REPLACE-ME-runner-tag ]
+  before_script:
+    - git clone --depth 1 --branch "${MTK_CI_REF}" "${MTK_CI_REPO}" /tmp/mtk-ci
+  script:
+    - python3 /tmp/mtk-ci/scripts/build_commits.py
+  artifacts:
+    when: always
+    paths: [ build-summary.txt ]
+    expire_in: 1 week
